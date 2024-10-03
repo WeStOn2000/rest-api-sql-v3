@@ -1,5 +1,10 @@
 'use strict';
 
+const routes = require('./routes')
+
+app.use('/api',routes)
+app.use(express.json());
+
 // load modules
 const express = require('express');
 const morgan = require('morgan');
