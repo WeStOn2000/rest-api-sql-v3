@@ -5,6 +5,10 @@ const express = require('express');
 const morgan = require('morgan');
 const routes = require('./Routes/routes');
 const { sequelize } = require('./models');
+const users = require('./seed/data.json');
+const { User } = require('./models'); 
+
+
 
 // the Express app
 const app = express();
@@ -12,16 +16,23 @@ const app = express();
 // Variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
 
-// Setup morgan which gives us HTTP request logging
+//  morgan which gives us HTTP request logging
 app.use(morgan('dev'));
 
 // Parse JSON bodies
 app.use(express.json());
 
-// Setup API routes
+//  API routes
 app.use('/api',routes);
 
-// Send 404 if no other route matched
+// friendly greeting for the root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to the REST API project!',
+  });
+});
+
+// 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({
     message: 'Route Not Found',
@@ -38,6 +49,14 @@ app.use((err, req, res, next) => {
     error: {},
   });
 });
+// users
+const seedUsers = async () => {
+  try {
+    await User.bulkCreate(users); 
+  } catch (error) {
+    console.error('Error seeding users:', error);
+  }
+};
 
 // Test database connection
 sequelize
@@ -49,7 +68,7 @@ sequelize
     console.error('Unable to connect to the database:', err);
   });
 
-// Set our port
+//  our port
 app.set('port', process.env.PORT || 5000);
 
 // Start listening on our port
