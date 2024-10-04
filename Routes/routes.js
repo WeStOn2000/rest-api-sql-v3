@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models'); 
+const { User, Course } = require('../models');
 
 // asyncHandler Function
 const asyncHandler = (cb) => {
@@ -15,9 +15,11 @@ const asyncHandler = (cb) => {
 
 // GET /api/users
 router.get('/users', asyncHandler(async (req, res) => {
+  console.log('Fetching users...');
   const users = await User.findAll({
     attributes: ['id', 'firstName', 'lastName', 'emailAddress']
   });
+  console.log('Users fetched:', users);
   res.status(200).json(users);
 }));
 

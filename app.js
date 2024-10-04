@@ -5,7 +5,9 @@ const express = require('express');
 const morgan = require('morgan');
 const routes = require('./Routes/routes');
 const users = require('./seed/data.json')
-const { sequelize, User } = require('./models');
+const { sequelize, User , Course } = require('./models');
+const fs = require('fs');
+const path = require('path');
 
 
 // the Express app
@@ -47,16 +49,24 @@ app.use((err, req, res, next) => {
     error: {},
   });
 });
-// users
-const seedUsers = async () => {
+
+// Test database connection
+const seedData = async () => {
   try {
-    await User.bulkCreate(users); 
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed', 'data.json'), 'utf8'));
+    
+    // Seed Users
+    await User.bulkCreate(data.users);
+    console.log('Users seeded successfully');
+
+    // Seed Courses
+    await Course.bulkCreate(data.courses);
+    console.log('Courses seeded successfully');
   } catch (error) {
-    console.error('Error seeding users:', error);
+    console.error('Error seeding data:', error);
   }
 };
 
-// Test database connection
 sequelize
   .authenticate()
   .then(() => {
@@ -65,11 +75,8 @@ sequelize
   })
   .then(() => {
     console.log('Database synced successfully.');
-    seedUsers(); 
+    return seedData();
   })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
 
 
 //  our port
