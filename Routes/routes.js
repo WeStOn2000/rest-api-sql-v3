@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('./models'); 
+const { User } = require('../models');
 
 // asyncHandler Function
 const asyncHandler = (cb) => {
-    return async (req, res, next) => {
-        try {
-            await cb(req, res, next);
-        } catch (err) {
-            next(err);
-        }
-    };
+  return async (req, res, next) => {
+    try {
+      await cb(req, res, next);
+    } catch (err) {
+      next(err);
+    }
+  };
 };
 
 // GET /api/users
@@ -22,7 +22,7 @@ router.get('/users', asyncHandler(async (req, res) => {
 }));
 
 // POST /api/users
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/users', asyncHandler(async (req, res) => {
   const { firstName, lastName, emailAddress, password } = req.body;
 
   if (!firstName || !lastName || !emailAddress || !password) {

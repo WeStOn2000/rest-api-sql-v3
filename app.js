@@ -3,7 +3,8 @@
 // Load modules
 const express = require('express');
 const morgan = require('morgan');
-const routes = require('./routes');
+const routes = require('./Routes/routes');
+const { sequelize } = require('./models');
 
 // the Express app
 const app = express();
@@ -18,14 +19,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // Setup API routes
-app.use('/api', routes);
-
-// Setup a friendly greeting for the root route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to the REST API project!',
-  });
-});
+app.use('/api',routes);
 
 // Send 404 if no other route matched
 app.use((req, res) => {
@@ -44,6 +38,16 @@ app.use((err, req, res, next) => {
     error: {},
   });
 });
+
+// Test database connection
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('Database connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
 
 // Set our port
 app.set('port', process.env.PORT || 5000);
