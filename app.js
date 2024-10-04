@@ -4,10 +4,8 @@
 const express = require('express');
 const morgan = require('morgan');
 const routes = require('./Routes/routes');
-const { sequelize } = require('./models');
-const users = require('./seed/data.json');
-const { User } = require('./models'); 
-
+const users = require('./seed/data.json')
+const { sequelize, User } = require('./models');
 
 
 // the Express app
@@ -63,10 +61,16 @@ sequelize
   .authenticate()
   .then(() => {
     console.log('Database connection has been established successfully.');
+    return sequelize.sync();
+  })
+  .then(() => {
+    console.log('Database synced successfully.');
+    seedUsers(); // Call the seeding function
   })
   .catch(err => {
     console.error('Unable to connect to the database:', err);
   });
+
 
 //  our port
 app.set('port', process.env.PORT || 5000);

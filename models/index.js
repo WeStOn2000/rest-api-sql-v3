@@ -37,6 +37,8 @@ Object.keys(db).forEach(modelName => {
   }
 });
 
+
+
 (async () => {
   try {
     await sequelize.authenticate();
@@ -49,4 +51,6 @@ Object.keys(db).forEach(modelName => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
+
 module.exports = db;
+

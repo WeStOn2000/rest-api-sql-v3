@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models');
+const { User } = require('../models'); 
 
 // asyncHandler Function
 const asyncHandler = (cb) => {
@@ -25,22 +25,34 @@ router.get('/users', asyncHandler(async (req, res) => {
 router.post('/users', asyncHandler(async (req, res) => {
   const { firstName, lastName, emailAddress, password } = req.body;
 
+  // Validate required fields
   if (!firstName || !lastName || !emailAddress || !password) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    const missingFields = [];
+    if (!firstName) missingFields.push('firstName');
+    if (!lastName) missingFields.push('lastName');
+    if (!emailAddress) missingFields.push('emailAddress');
+    if (!password) missingFields.push('password');
+
+    return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
   }
 
+  // Check if the user already exists
   const existingUser = await User.findOne({ where: { emailAddress } });
   if (existingUser) {
     return res.status(409).json({ error: 'User already exists' });
   }
 
+  // Create the new user
   const newUser = await User.create({ firstName, lastName, emailAddress, password });
+
+  // Set Location header to "/"
   res.setHeader('Location', '/');
   res.status(201).end();
 }));
 
+
 // fetch all courses
-app.get('/api/courses', asyncHandler(async (req, res) => {
+router.get('/api/courses', asyncHandler(async (req, res) => {
   const courses = await Course.findAll({
     include: { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }
   });
@@ -48,7 +60,7 @@ app.get('/api/courses', asyncHandler(async (req, res) => {
 }));
 
 // fetch course by id
-app.get('/api/courses/:id', asyncHandler(async (req, res, next) => {
+router.get('/api/courses/:id', asyncHandler(async (req, res, next) => {
   const course = await Course.findByPk(req.params.id, {
     include: { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }
   });
@@ -60,13 +72,13 @@ app.get('/api/courses/:id', asyncHandler(async (req, res, next) => {
 }));
 
 //create a new course
-app.post('/api/courses', asyncHandler(async (req, res) => {
+router.post('/api/courses', asyncHandler(async (req, res) => {
   const course = await Course.create(req.body);
   res.location(`/api/courses/${course.id}`).status(201).end();
 }));
 
 //update a course by id 
-app.put('/api/courses/:id', asyncHandler(async (req, res) => {
+router.put('/api/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
     await course.update(req.body);
@@ -77,7 +89,7 @@ app.put('/api/courses/:id', asyncHandler(async (req, res) => {
 }));
 
 // delete course by id
-app.delete('/api/courses/:id', asyncHandler(async (req, res) => {
+router.delete('/api/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
     await course.destroy();
