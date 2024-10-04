@@ -15,11 +15,9 @@ const asyncHandler = (cb) => {
 
 // GET /api/users
 router.get('/users', asyncHandler(async (req, res) => {
-  console.log('Fetching users...');
   const users = await User.findAll({
     attributes: ['id', 'firstName', 'lastName', 'emailAddress']
   });
-  console.log('Users fetched:', users);
   res.status(200).json(users);
 }));
 
@@ -54,7 +52,7 @@ router.post('/users', asyncHandler(async (req, res) => {
 
 
 // fetch all courses
-router.get('/api/courses', asyncHandler(async (req, res) => {
+router.get('/courses', asyncHandler(async (req, res) => {
   const courses = await Course.findAll({
     include: { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }
   });
@@ -62,7 +60,7 @@ router.get('/api/courses', asyncHandler(async (req, res) => {
 }));
 
 // fetch course by id
-router.get('/api/courses/:id', asyncHandler(async (req, res, next) => {
+router.get('/courses/:id', asyncHandler(async (req, res, next) => {
   const course = await Course.findByPk(req.params.id, {
     include: { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }
   });
@@ -74,13 +72,13 @@ router.get('/api/courses/:id', asyncHandler(async (req, res, next) => {
 }));
 
 //create a new course
-router.post('/api/courses', asyncHandler(async (req, res) => {
+router.post('/courses', asyncHandler(async (req, res) => {
   const course = await Course.create(req.body);
   res.location(`/api/courses/${course.id}`).status(201).end();
 }));
 
 //update a course by id 
-router.put('/api/courses/:id', asyncHandler(async (req, res) => {
+router.put('/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
     await course.update(req.body);
@@ -91,7 +89,7 @@ router.put('/api/courses/:id', asyncHandler(async (req, res) => {
 }));
 
 // delete course by id
-router.delete('/api/courses/:id', asyncHandler(async (req, res) => {
+router.delete('/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
     await course.destroy();
