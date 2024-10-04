@@ -5,7 +5,7 @@ const express = require('express');
 const morgan = require('morgan');
 const routes = require('./routes');
 
-// Create the Express app
+// the Express app
 const app = express();
 
 // Variable to enable global error logging
