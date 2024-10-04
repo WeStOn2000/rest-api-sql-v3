@@ -65,7 +65,7 @@ sequelize
   })
   .then(() => {
     console.log('Database synced successfully.');
-    seedUsers(); // Call the seeding function
+    seedUsers(); 
   })
   .catch(err => {
     console.error('Unable to connect to the database:', err);
