@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const users = require('./seed/data.json');
 const { User } = require('./models'); 
 
 // asyncHandler Function
@@ -15,7 +14,7 @@ const asyncHandler = (cb) => {
 };
 
 // GET /api/users
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/users', asyncHandler(async (req, res) => {
   const users = await User.findAll({
     attributes: ['id', 'firstName', 'lastName', 'emailAddress']
   });
