@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { User, Course } = require('../models');
-const authenticateUser = require('./auth-middleware');
-
+const authenticateUser = require('../auth-middleware');
 // asyncHandler Function
 const asyncHandler = (cb) => {
   return async (req, res, next) => {
@@ -14,56 +13,52 @@ const asyncHandler = (cb) => {
   };
 };
 
-// GET /api/users
+// GET /api/users 
 router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
-  const users = await User.findAll({
+  const user = await User.findByPk(req.currentUser.id, {
     attributes: ['id', 'firstName', 'lastName', 'emailAddress']
   });
-  res.status(200).json(users);
+  res.status(200).json(user);
 }));
 
 // POST /api/users
-router.post('/users',  asyncHandler(async (req, res) => {
-  const { firstName, lastName, emailAddress, password } = req.body;
-
-  // Validate required fields
-  if (!firstName || !lastName || !emailAddress || !password) {
-    const missingFields = [];
-    if (!firstName) missingFields.push('firstName');
-    if (!lastName) missingFields.push('lastName');
-    if (!emailAddress) missingFields.push('emailAddress');
-    if (!password) missingFields.push('password');
-
-    return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
+router.post('/users', asyncHandler(async (req, res) => {
+  try {
+    await User.create(req.body);
+    res.setHeader('Location', '/');
+    res.status(201).end();
+  } catch (error) {
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      const errors = error.errors.map(err => err.message);
+      res.status(400).json({ errors });
+    } else {
+      throw error;
+    }
   }
-
-  // Check if the user already exists
-  const existingUser = await User.findOne({ where: { emailAddress } });
-  if (existingUser) {
-    return res.status(409).json({ error: 'User already exists' });
-  }
-
-  // Create the new user
-  const newUser = await User.create({ firstName, lastName, emailAddress, password });
-
-  // Set Location header to "/"
-  res.setHeader('Location', '/');
-  res.status(201).end();
 }));
 
-
-// fetch all courses
+// GET /api/courses 
 router.get('/courses', asyncHandler(async (req, res) => {
   const courses = await Course.findAll({
-    include: { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }
+    attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded'],
+    include: [{
+      model: User,
+      as: 'user',
+      attributes: ['id', 'firstName', 'lastName', 'emailAddress']
+    }]
   });
   res.status(200).json(courses);
 }));
 
-// fetch course by id
-router.get('/courses/:id', asyncHandler(async (req, res, next) => {
+// GET /api/courses/:id 
+router.get('/courses/:id', asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id, {
-    include: { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'emailAddress'] }
+    attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded'],
+    include: [{
+      model: User,
+      as: 'user',
+      attributes: ['id', 'firstName', 'lastName', 'emailAddress']
+    }]
   });
   if (course) {
     res.status(200).json(course);
@@ -72,16 +67,22 @@ router.get('/courses/:id', asyncHandler(async (req, res, next) => {
   }
 }));
 
-//create a new course
-router.post('/courses', authenticateUser , asyncHandler(async (req, res) => {
-  const course = await Course.create(req.body);
+// POST /api/courses 
+router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
+  const course = await Course.create({
+    ...req.body,
+    userId: req.currentUser.id
+  });
   res.location(`/api/courses/${course.id}`).status(201).end();
 }));
 
-//update a course by id 
-router.put('/courses/:id', authenticateUser ,asyncHandler(async (req, res) => {
+// PUT /api/courses/:id 
+router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
+    if (course.userId !== req.currentUser.id) {
+      return res.status(403).json({ message: 'You do not have permission to update this course' });
+    }
     await course.update(req.body);
     res.status(204).end();
   } else {
@@ -89,10 +90,13 @@ router.put('/courses/:id', authenticateUser ,asyncHandler(async (req, res) => {
   }
 }));
 
-// delete course by id
-router.delete('/courses/:id', authenticateUser , asyncHandler(async (req, res) => {
+// DELETE /api/courses/:id 
+router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
   const course = await Course.findByPk(req.params.id);
   if (course) {
+    if (course.userId !== req.currentUser.id) {
+      return res.status(403).json({ message: 'You do not have permission to delete this course' });
+    }
     await course.destroy();
     res.status(204).end();
   } else {
@@ -100,5 +104,4 @@ router.delete('/courses/:id', authenticateUser , asyncHandler(async (req, res) =
   }
 }));
 
-//exports 
 module.exports = router;
