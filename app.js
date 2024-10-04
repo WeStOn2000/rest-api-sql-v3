@@ -44,10 +44,18 @@ app.use((err, req, res, next) => {
     console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
   }
 
-  res.status(err.status || 500).json({
-    message: err.message,
-    error: {},
-  });
+  
+  if (err.status === 400 || err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+    res.status(400).json({
+      message: err.message,
+      errors: err.errors?.map(e => e.message) || [err.message],
+    });
+  } else {
+    res.status(err.status || 500).json({
+      message: err.message || 'An unexpected error occurred',
+      error: {},
+    });
+  }
 });
 
 // Test database connection
@@ -77,6 +85,11 @@ sequelize
     console.log('Database synced successfully.');
     return seedData();
   })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+
+
 
 
 //  our port

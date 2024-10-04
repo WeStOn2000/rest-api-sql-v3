@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { User, Course } = require('../models');
 const authenticateUser = require('../auth-middleware');
+
+// Helper function for validation
+const validateFields = (requiredFields, body) => {
+  const missingFields = requiredFields.filter(field => !body[field]);
+  const error = new Error(`Missing required fields: ${missingFields.join(', ')}`);
+  error.status = 400;
+  throw error;
+};
+
 // asyncHandler Function
 const asyncHandler = (cb) => {
   return async (req, res, next) => {
@@ -23,18 +32,10 @@ router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
 
 // POST /api/users
 router.post('/users', asyncHandler(async (req, res) => {
-  try {
-    await User.create(req.body);
-    res.setHeader('Location', '/');
-    res.status(201).end();
-  } catch (error) {
-    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
-      const errors = error.errors.map(err => err.message);
-      res.status(400).json({ errors });
-    } else {
-      throw error;
-    }
-  }
+  validateFields(['firstName', 'lastName', 'emailAddress', 'password'], req.body);
+  await User.create(req.body);
+  res.setHeader('Location', '/');
+  res.status(201).end();
 }));
 
 // GET /api/courses 
@@ -69,6 +70,7 @@ router.get('/courses/:id', asyncHandler(async (req, res) => {
 
 // POST /api/courses 
 router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
+  validateFields(['title', 'description'], req.body);
   const course = await Course.create({
     ...req.body,
     userId: req.currentUser.id
@@ -78,6 +80,7 @@ router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
 
 // PUT /api/courses/:id 
 router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
+  validateFields(['title', 'description'], req.body);
   const course = await Course.findByPk(req.params.id);
   if (course) {
     if (course.userId !== req.currentUser.id) {
